@@ -4,11 +4,12 @@ from enum import Enum
 
 #Pydantic
 from pydantic import BaseModel
-from pydantic import Field
+from pydantic import Field, EmailStr, HttpUrl
 
 #FastAPI
 from fastapi import FastAPI 
 from fastapi import Body, Query, Path
+from pydantic.types import PaymentCardNumber
 
 app = FastAPI()
 
@@ -38,12 +39,70 @@ class Person(BaseModel):
     )
     hair_color: Optional[HairColor] = Field(default=None)
     is_married: Optional[bool] = Field(default=None)
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "first_name": "Facundo",
+                "last_name": "Garcia Martoni",
+                "age": 21,
+                "hair_color": "blonde",
+                "is_married": False
+            }
+        }
+
+class Developer(Person):
+    
+    email: EmailStr = Field(
+        ...
+    )
+    site: HttpUrl = Field(
+        ...
+    )
+    payment_card: PaymentCardNumber = Field(
+        ...
+    )
+    class Config:
+        schema_extra = {
+            "example": {
+                "first_name": "Facundo",
+                "last_name": "Garcia Martoni",
+                "age": 21,
+                "hair_color": "blonde",
+                "is_married": False,
+                "email": "user@example.com",
+                "site": "http://www.platzi.com",
+                "payment_card": "5579099012702512"
+            }
+        }
+
 
 
 class Location(BaseModel):
-    city: str
-    state: str
-    country: str
+    city: str = Field(
+        ...,
+        min_length = 1,
+        max_length = 50
+        )
+    state: str = Field(
+        ...,
+        min_length = 1,
+        max_length = 50
+        )
+    country: str = Field(
+        ...,
+        min_length = 1,
+        max_length = 50
+        )
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "city": "Puebla",
+                "state": "Puebla",
+                "country": "Mexico"
+            }
+        }
 
 @app.get("/")
 def home() -> Dict:
@@ -104,3 +163,7 @@ def update_person(
     result = person.dict()
     result.update(location.dict())
     return result
+
+@app.post("/developer/new")
+def create_dev(developer: Developer = Body(...)):
+    return developer
